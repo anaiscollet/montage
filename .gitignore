@@ -1,0 +1,6 @@
+sortie/
+__pycache__/
+*.mp4
+*.m4a
+*.opus
+*.wav
