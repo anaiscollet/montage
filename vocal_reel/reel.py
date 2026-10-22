@@ -445,21 +445,36 @@ def accroche(img, texte, t, duree_acc):
     img.alpha_composite(calque)
 
 
-def appel_action(img, texte, t):
-    """Carte de fin aérée, texte pas trop gros, au-dessus de la zone basse."""
-    ft = police("DMSans-Bold.ttf", 54)
-    largeur = texte_avec_emoji(None, (0, 0), texte, ft, None)
-    bw, hh = largeur + 120, 130
-    a = min(1.0, t / 0.3)
-    x0, y0 = (W - bw) / 2, H - ZONE_BAS - hh - 40 + (1 - a) * 30
-    calque = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    ombre(calque, (x0, y0, x0 + bw, y0 + hh), 65, 70)
-    pilule(calque, (x0, y0, x0 + bw, y0 + hh), 65, CREME + (255,))
-    texte_avec_emoji(calque, (x0 + 50, y0 + (hh - 54) / 2 - 10), texte, ft, BORDEAUX + (255,))
-    if a < 1:
-        calque.putalpha(calque.getchannel("A").point(lambda v: int(v * a)))
-    img.alpha_composite(calque)
-    return y0
+HAUTEUR_CTA = 120
+ECART_CTA = 24
+
+
+def hauteur_cta(textes):
+    return len(textes) * (HAUTEUR_CTA + ECART_CTA)
+
+
+def appel_action(img, textes, t, delai=0.7):
+    """Cartes de fin aérées, textes pas trop gros, au-dessus de la zone basse.
+    La première en bordeaux, les suivantes en crème ; elles arrivent l'une après l'autre."""
+    ft = police("DMSans-Bold.ttf", 50)
+    y_bas = H - ZONE_BAS - 30
+    for i, texte in reversed(list(enumerate(textes))):
+        ti = t - i * delai
+        y_bas_i = y_bas - (len(textes) - 1 - i) * (HAUTEUR_CTA + ECART_CTA)
+        if ti < 0:
+            continue
+        fond, coul = (BORDEAUX, CREME) if i == 0 else (CREME, BORDEAUX)
+        largeur = texte_avec_emoji(None, (0, 0), texte, ft, None)
+        bw, hh = largeur + 120, HAUTEUR_CTA
+        a = min(1.0, ti / 0.3)
+        x0, y0 = (W - bw) / 2, y_bas_i - hh + (1 - a) * 30
+        calque = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        ombre(calque, (x0, y0, x0 + bw, y0 + hh), 60, 70)
+        pilule(calque, (x0, y0, x0 + bw, y0 + hh), 60, fond + (255,))
+        texte_avec_emoji(calque, (x0 + 55, y0 + (hh - 50) / 2 - 9), texte, ft, coul + (255,))
+        if a < 1:
+            calque.putalpha(calque.getchannel("A").point(lambda v: int(v * a)))
+        img.alpha_composite(calque)
 
 
 # ---------------------------------------------------------------- visage
@@ -493,7 +508,7 @@ def position_sous_titre(boites, t0, t1, hauteur, haut_min, bas_max):
     if not zone:
         return y_def
     fy0 = min(b[1] for b in zone) - 30
-    fy1 = max(b[3] for b in zone) + 30
+    fy1 = max(b[3] + (b[3] - b[1]) * 0.15 for b in zone) + 30     # le menton dépasse souvent du cadre détecté
     if y_def + hauteur / 2 < fy0 or y_def - hauteur / 2 > fy1:
         return y_def
     if fy1 + hauteur + 10 <= bas_max:
@@ -525,8 +540,15 @@ def etape_monter(ep):
         morceaux.append(("vocal", acc["debut"], acc["fin"], dos / "a_accroche.wav"))
     nettoyer_son(ep["vocal"], dos / "a_vocal.wav", ext["debut"], ext["fin"], debruitage)
     morceaux.append(("vocal", ext["debut"], ext["fin"], dos / "a_vocal.wav"))
-    nettoyer_son(ep["reaction"], dos / "a_fin.wav", fin["debut"], fin["fin"], ep.get("debruitage_fin", 6))
-    morceaux.append(("moi", fin["debut"], fin["fin"], dos / "a_fin.wav"))
+    plans_fin = fin if isinstance(fin, list) else [fin]
+    for i, p in enumerate(plans_fin):
+        wav = dos / f"a_fin{i}.wav"
+        if p.get("son", True):
+            nettoyer_son(ep["reaction"], wav, p["debut"], p["fin"], ep.get("debruitage_fin", 6))
+        else:                                   # plan muet (pour laisser lire l'appel à l'action)
+            lancer(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo",
+                    "-t", f"{p['fin'] - p['debut']:.3f}", str(wav)])
+        morceaux.append(("moi" if p.get("son", True) else "muet", p["debut"], p["fin"], wav))
 
     liste = dos / "a_liste.txt"
     liste.write_text("".join(f"file '{m[3]}'\n" for m in morceaux))
@@ -541,7 +563,9 @@ def etape_monter(ep):
     total = t
     duree_acc = (acc["fin"] - acc["debut"]) if acc.get("debut") is not None else acc.get("duree", 2.0)
     duree_vocal = sum(f - d for s, d, f, _ in chrono if s == "vocal")
-    debut_fin = chrono[-1][3]
+    debut_fin = next(c[3] for c in chrono if c[0] != "vocal")
+    ctas = ep.get("cta", "Envoie-moi ton vocal en DM 🎙️")
+    ctas = ctas if isinstance(ctas, list) else [ctas]
 
     def placer(groupes, src, d, f, decal):
         res = []
@@ -562,8 +586,8 @@ def etape_monter(ep):
             if decal + 0.01 >= duree_acc:       # pas de sous-titres sous le bandeau d'accroche
                 g_vocal += gs
             else:
-                g_vocal += [g for g in gs if g[0]["debut"] >= duree_acc - 0.05]
-        else:
+                g_vocal += [g for g in gs if g[-1]["fin"] > duree_acc + 0.2]
+        elif src == "moi":
             gs = placer(g_moi_tous, src, d, f, decal)
             g_moi += gs
             g_srt += gs
@@ -601,7 +625,10 @@ def etape_monter(ep):
     bx_vocal = []
     for d, f, decal in plans:
         bx_vocal += [(tt + decal, b) for tt, b in visages(ep["reaction"], d, f)]
-    bx_fin = visages(ep["reaction"], fin["debut"], fin["fin"])
+    bx_fin = []
+    for src, d, f, decal in chrono:
+        if src != "vocal":
+            bx_fin += [(tt + decal, b) for tt, b in visages(ep["reaction"], d, f)]
     st_v = SousTitres(g_vocal, STYLE_VOCAL)
     st_m = SousTitres(g_moi, STYLE_MOI)
     pos = {}
@@ -610,9 +637,8 @@ def etape_monter(ep):
         pos[id(g)] = position_sous_titre(bx_vocal, g[0]["debut"], g[-1]["fin"], h, bulle.bas + 20, H - ZONE_BAS - 20)
     for g in g_moi:
         h = st_m.hauteur(g)
-        bx = [(tt + debut_fin, b) for tt, b in bx_fin]
-        pos[id(g)] = position_sous_titre(bx, g[0]["debut"], g[-1]["fin"], h, ZONE_HAUT + 20,
-                                         H - ZONE_BAS - 130 - 40 - 30)
+        pos[id(g)] = position_sous_titre(bx_fin, g[0]["debut"], g[-1]["fin"], h, ZONE_HAUT + 20,
+                                         H - ZONE_BAS - 30 - hauteur_cta(ctas) - 20)
 
     # 6. l'image, image par image
     sortie = dos / f"{ep['nom']}.mp4"
@@ -622,12 +648,13 @@ def etape_monter(ep):
                             "-c:v", "libx264", "-preset", ep.get("preset", "medium"), "-crf", str(ep.get("crf", 19)),
                             "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
                             "-shortest", "-movflags", "+faststart", str(sortie)], stdin=subprocess.PIPE)
-    plans.append((fin["debut"], fin["fin"], debut_fin))
+    plans += [(d, f, decal) for src, d, f, decal in chrono if src != "vocal"]
     n_total = int(round(total * FPS))
     n = 0
     for (d, f, decal) in plans:
         dec = subprocess.Popen(["ffmpeg", "-v", "error", "-ss", str(d), "-to", str(f), "-i", ep["reaction"],
-                                "-vf", vf, "-an", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
+                                "-vf", vf, "-an", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
+                               stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         nb_plan = int(round((f - d) * FPS))
         derniere = None
         for k in range(nb_plan):
@@ -642,7 +669,7 @@ def etape_monter(ep):
             if t < debut_fin:
                 bulle.dessiner(img, t, niveau)
                 g = st_v.groupe_a(t)
-                if g and t >= duree_acc:
+                if g and t >= duree_acc - 0.1:
                     st_v.dessiner(img, t, g, pos[id(g)])
                 if t < duree_acc:
                     accroche(img, acc["texte"], t, duree_acc)
@@ -655,7 +682,7 @@ def etape_monter(ep):
                     st_m.dessiner(img, t, g, pos[id(g)])
                 cta_debut = ep.get("cta_apres", 0.6)
                 if tf >= cta_debut:
-                    appel_action(img, ep.get("cta", "Envoie-moi ton vocal en DM 🎙️"), tf - cta_debut)
+                    appel_action(img, ctas, tf - cta_debut)
             enc.stdin.write(img.convert("RGB").tobytes())
             n += 1
         dec.stdout.close()

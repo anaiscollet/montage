@@ -4,13 +4,45 @@
   "reaction": "../medias/reaction.mp4",
   "vocal": "../medias/vocal_marie.opus",
   "modele_whisper": "medium",
-
-  "accroche": {"texte": "La charge mentale du costume d'Halloween", "debut": null, "fin": null, "duree": 2.0},
-  "vocal_extrait": {"debut": 5.96, "fin": 18.4},
-  "reaction_pendant_vocal": [{"debut": 10.5, "fin": 13.5}, {"debut": 17.5, "fin": 22.5}, {"debut": 30.5}],
-  "fin": {"debut": 42.1, "fin": 49.8},
-  "cta": "Envoie-moi ton vocal en DM 🎙️",
-
+  "accroche": {
+    "texte": "La charge mentale du costume d'Halloween",
+    "debut": null,
+    "fin": null,
+    "duree": 2.0
+  },
+  "vocal_extrait": {
+    "debut": 5.9,
+    "fin": 18.4
+  },
+  "reaction_pendant_vocal": [
+    {
+      "debut": 10.5,
+      "fin": 13.5
+    },
+    {
+      "debut": 17.5,
+      "fin": 22.5
+    },
+    {
+      "debut": 30.5
+    }
+  ],
+  "fin": [
+    {
+      "debut": 42.15,
+      "fin": 47.6
+    },
+    {
+      "debut": 51.0,
+      "fin": 53.2,
+      "son": false
+    }
+  ],
+  "cta": [
+    "Le prompt est en légende 👇",
+    "Envoie-moi ton vocal en DM 🎙️"
+  ],
+  "cta_apres": 3.6,
   "debruitage": 8,
   "debruitage_fin": 6
 }
