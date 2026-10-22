@@ -30,7 +30,7 @@
   "fin": [
     {
       "debut": 42.15,
-      "fin": 47.6
+      "fin": 47.44
     },
     {
       "debut": 51.0,
@@ -40,7 +40,7 @@
   ],
   "cta": [
     "Le prompt est en légende 👇",
-    "Envoie-moi ton vocal en DM 🎙️"
+    "Ton vocal pourrait être le prochain 🎙️"
   ],
   "cta_apres": 3.6,
   "debruitage": 8,
