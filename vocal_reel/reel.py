@@ -285,6 +285,7 @@ def texte_avec_emoji(draw_img, xy, texte, ft, couleur):
             e = e.crop(e.getbbox() or (0, 0, 1, 1))
             h = int(taille * 0.95)
             e = e.resize((max(1, int(e.width * h / e.height)), h), Image.LANCZOS)
+            x += taille * 0.15                  # petit espace avant l'emoji
             if draw_img is not None and couleur is not None:
                 draw_img.alpha_composite(e, (int(x), int(y + taille * 0.12)))
             x += e.width + taille * 0.1
