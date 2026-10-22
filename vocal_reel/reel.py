@@ -417,9 +417,7 @@ class SousTitres:
         img.alpha_composite(calque)
 
 
-def accroche(img, texte, t, duree_acc):
-    """Bandeau d'accroche : la phrase forte en gros, Anton majuscules."""
-    ft = police("Anton-Regular.ttf", 112)
+def lignes_accroche(texte, ft):
     mots, lignes, cour = texte.upper().split(), [], ""
     for m in mots:
         essai = (cour + " " + m).strip()
@@ -429,19 +427,31 @@ def accroche(img, texte, t, duree_acc):
         else:
             cour = essai
     lignes.append(cour)
+    return lignes
+
+
+def hauteur_accroche(texte):
+    ft = police("Anton-Regular.ttf", 100)
+    return len(lignes_accroche(texte, ft)) * int(ft.size * 1.12) + 60
+
+
+def accroche(img, texte, t, duree_acc, y_centre):
+    """Bandeau d'accroche : la phrase forte en gros, Anton majuscules, placé hors du visage."""
+    ft = police("Anton-Regular.ttf", 100)
+    lignes = lignes_accroche(texte, ft)
     lh = int(ft.size * 1.12)
-    hh = len(lignes) * lh + 70
+    hh = len(lignes) * lh + 60
     entree = min(1.0, t / 0.18)
     sortie = min(1.0, max(0.0, (duree_acc - t) / 0.18))
     a = min(entree, sortie)
-    y0 = H * 0.46 - hh / 2 + (1 - entree) * 40
+    y0 = y_centre - hh / 2 + (1 - entree) * 40
     calque = Image.new("RGBA", img.size, (0, 0, 0, 0))
     ombre(calque, (0, y0, W, y0 + hh), 0, 90, 24)
     ImageDraw.Draw(calque).rectangle((0, y0, W, y0 + hh), fill=BORDEAUX + (255,))
     d = ImageDraw.Draw(calque)
     for i, l in enumerate(lignes):
         lw = ft.getlength(l)
-        d.text(((W - lw) / 2, y0 + 30 + i * lh), l, font=ft, fill=CREME)
+        d.text(((W - lw) / 2, y0 + 24 + i * lh), l, font=ft, fill=CREME)
     if a < 1:
         calque.putalpha(calque.getchannel("A").point(lambda v: int(v * a)))
     img.alpha_composite(calque)
@@ -642,6 +652,9 @@ def etape_monter(ep):
         pos[id(g)] = position_sous_titre(bx_fin, g[0]["debut"], g[-1]["fin"], h, ZONE_HAUT + 20,
                                          H - ZONE_BAS - 30 - hauteur_cta(ctas) - 20)
 
+    y_accroche = position_sous_titre(bx_vocal, 0, duree_acc, hauteur_accroche(acc["texte"]),
+                                     bulle.bas + 20, H - ZONE_BAS - 20)
+
     # 6. l'image, image par image
     sortie = dos / f"{ep['nom']}.mp4"
     vf = f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps={FPS},setsar=1"
@@ -674,7 +687,7 @@ def etape_monter(ep):
                 if g and t >= duree_acc - 0.1:
                     st_v.dessiner(img, t, g, pos[id(g)])
                 if t < duree_acc:
-                    accroche(img, acc["texte"], t, duree_acc)
+                    accroche(img, acc["texte"], t, duree_acc, y_accroche)
             else:
                 tf = t - debut_fin
                 if tf < 0.3:
