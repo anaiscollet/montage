@@ -38,8 +38,10 @@ CREME = (243, 235, 221)
 CACAO = (58, 10, 18)
 
 # styles de sous-titres : la voix de la maman, et ta voix à la fin
-STYLE_VOCAL = {"fond": ROSE_BONBON, "texte": CACAO, "actif": FRAMBOISE, "actif_texte": CREME}
-STYLE_MOI = {"fond": CREME, "texte": BORDEAUX, "actif": FRAMBOISE, "actif_texte": CREME}
+# sous-titres sobres : fond crème, texte cacao, mot en cours simplement écrit en bordeaux
+# ("actif" = couleur d'un surlignage derrière le mot ; None = pas de surlignage)
+STYLE_VOCAL = {"fond": CREME, "texte": CACAO, "actif": None, "actif_texte": BORDEAUX}
+STYLE_MOI = {"fond": CREME, "texte": CACAO, "actif": None, "actif_texte": BORDEAUX}
 
 
 # ---------------------------------------------------------------- utilitaires
@@ -406,7 +408,7 @@ class SousTitres:
             for m in l:
                 lw = self.ft.getlength(m["mot"])
                 actif = m["debut"] <= t < m["fin"] + 0.08
-                if actif:
+                if actif and self.style["actif"]:
                     d.rounded_rectangle((x - 12, y + 4, x + lw + 12, y + self.lh - 8), 18,
                                         fill=self.style["actif"] + (255,))
                 d.text((x, y + (self.lh - self.ft.size) / 2 - asc / 2), m["mot"], font=self.ft,
