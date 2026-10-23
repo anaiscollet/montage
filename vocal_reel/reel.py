@@ -151,7 +151,9 @@ def grouper(mots, mini=3, maxi=5, max_car=30):
         if suivant is None or fin_phrase or pause or (len(cour) >= mini and ponct):
             groupes.append(cour)
             cour = []
-        elif len(cour) >= maxi or longueur >= max_car:
+        elif (len(cour) >= maxi or longueur >= max_car) and not (
+                len(cour) <= maxi and suivant["mot"][-1] in ".!?…" and not pause):
+            # (on accepte un mot de plus pour ne pas laisser un « faut. » tout seul)
             # on reporte les petits mots de fin sur le groupe suivant
             report = []
             while len(cour) > 2 and cour[-1]["mot"].lower().strip(",") in PETITS_MOTS:
