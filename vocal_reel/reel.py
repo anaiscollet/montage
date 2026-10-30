@@ -464,8 +464,15 @@ HAUTEUR_CTA = 120
 ECART_CTA = 24
 
 
+INTERLIGNE_CTA = 62
+
+
+def hauteur_carte(texte):
+    return HAUTEUR_CTA + texte.count("\n") * INTERLIGNE_CTA
+
+
 def hauteur_cta(textes):
-    return len(textes) * (HAUTEUR_CTA + ECART_CTA)
+    return sum(hauteur_carte(t) + ECART_CTA for t in textes)
 
 
 def appel_action(img, textes, t, delai=0.7):
@@ -475,18 +482,22 @@ def appel_action(img, textes, t, delai=0.7):
     y_bas = H - ZONE_BAS - 30
     for i, texte in reversed(list(enumerate(textes))):
         ti = t - i * delai
-        y_bas_i = y_bas - (len(textes) - 1 - i) * (HAUTEUR_CTA + ECART_CTA)
+        # les cartes suivantes sont empilées sous celle-ci ; une carte peut faire plusieurs lignes (« \n »)
+        y_bas_i = y_bas - sum(hauteur_carte(x) + ECART_CTA for x in textes[i + 1:])
         if ti < 0:
             continue
         fond, coul = (BORDEAUX, CREME) if i == 0 else (CREME, BORDEAUX)
-        largeur = texte_avec_emoji(None, (0, 0), texte, ft, None)
-        bw, hh = largeur + 120, HAUTEUR_CTA
+        lignes = texte.split("\n")
+        largeurs = [texte_avec_emoji(None, (0, 0), l, ft, None) for l in lignes]
+        bw, hh = max(largeurs) + 120, hauteur_carte(texte)
         a = min(1.0, ti / 0.3)
         x0, y0 = (W - bw) / 2, y_bas_i - hh + (1 - a) * 30
         calque = Image.new("RGBA", img.size, (0, 0, 0, 0))
         ombre(calque, (x0, y0, x0 + bw, y0 + hh), 60, 70)
         pilule(calque, (x0, y0, x0 + bw, y0 + hh), 60, fond + (255,))
-        texte_avec_emoji(calque, (x0 + 55, y0 + (hh - 50) / 2 - 9), texte, ft, coul + (255,))
+        for k, l in enumerate(lignes):
+            texte_avec_emoji(calque, ((W - largeurs[k]) / 2, y0 + (HAUTEUR_CTA - 50) / 2 - 9 + k * INTERLIGNE_CTA),
+                             l, ft, coul + (255,))
         if a < 1:
             calque.putalpha(calque.getchannel("A").point(lambda v: int(v * a)))
         img.alpha_composite(calque)
