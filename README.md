@@ -38,7 +38,7 @@ pip install -r requirements.txt
 | `vocal_extrait` | Le passage du vocal à garder (en secondes), ou une liste de passages mis bout à bout pour couper une hésitation |
 | `reaction_pendant_vocal` | Tes réactions pendant le vocal : de préférence un seul passage continu `{"debut": 17}` (plus naturel), ou plusieurs plans mis bout à bout |
 | `fin` | Le passage de ta vidéo où tu parles à la fin. Ou plusieurs plans, dont des plans muets (`"son": false`) pour laisser le temps de lire l'appel à l'action |
-| `cta` | L'appel à l'action à l'écran : un texte, ou une liste de cartes qui arrivent l'une après l'autre. Une carte peut faire 2 lignes avec « \\n » (les emojis marchent) |
+| `cta` | L'appel à l'action à l'écran : un texte, ou une liste de cartes qui arrivent l'une après l'autre. Une carte peut faire 2 lignes avec « \n » (les emojis marchent) |
 | `cta_apres` | Quand les cartes apparaissent, en secondes après le début de ta fin |
 | `debruitage` | Réduction de bruit du vocal (0 = aucune, 8 = léger, 15 = fort) |
 | `volume_vocal`, `volume_fin` | Volume de la voix en LUFS (-16 par défaut ; -19 = un peu moins fort, -22 = nettement moins fort) |
