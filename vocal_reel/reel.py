@@ -238,12 +238,12 @@ def etape_transcrire(ep):
 
 # ---------------------------------------------------------------- son
 
-def nettoyer_son(src, dst, debut, fin, debruitage):
+def nettoyer_son(src, dst, debut, fin, debruitage, volume=-16):
     """Voix nettoyée légèrement, volume normalisé, jamais accélérée."""
     filtres = ["highpass=f=80", "lowpass=f=12000"]
     if debruitage:
         filtres.append(f"afftdn=nr={debruitage}:nf=-40")
-    filtres += ["loudnorm=I=-16:TP=-1.5:LRA=11", "aresample=48000",
+    filtres += [f"loudnorm=I={volume}:TP=-1.5:LRA=11", "aresample=48000",
                 "afade=t=in:d=0.03", f"afade=t=out:st={max(0, fin - debut - 0.05):.3f}:d=0.05"]
     lancer(["ffmpeg", "-v", "error", "-y", "-ss", str(debut), "-to", str(fin), "-i", str(src),
             "-vn", "-ac", "2", "-af", ",".join(filtres), str(dst)])
@@ -551,17 +551,17 @@ def etape_monter(ep):
     # 1. le son : [accroche (phrase du vocal)] + [extrait du vocal] + [ta phrase de fin]
     morceaux = []
     if acc.get("debut") is not None:
-        nettoyer_son(ep["vocal"], dos / "a_accroche.wav", acc["debut"], acc["fin"], debruitage)
+        nettoyer_son(ep["vocal"], dos / "a_accroche.wav", acc["debut"], acc["fin"], debruitage, ep.get("volume_vocal", -16))
         morceaux.append(("vocal", acc["debut"], acc["fin"], dos / "a_accroche.wav"))
     # le vocal : un passage, ou plusieurs mis bout à bout (pour couper une hésitation au milieu)
     for i, e in enumerate(ext if isinstance(ext, list) else [ext]):
-        nettoyer_son(ep["vocal"], dos / f"a_vocal{i}.wav", e["debut"], e["fin"], debruitage)
+        nettoyer_son(ep["vocal"], dos / f"a_vocal{i}.wav", e["debut"], e["fin"], debruitage, ep.get("volume_vocal", -16))
         morceaux.append(("vocal", e["debut"], e["fin"], dos / f"a_vocal{i}.wav"))
     plans_fin = fin if isinstance(fin, list) else [fin]
     for i, p in enumerate(plans_fin):
         wav = dos / f"a_fin{i}.wav"
         if p.get("son", True):
-            nettoyer_son(ep["reaction"], wav, p["debut"], p["fin"], ep.get("debruitage_fin", 6))
+            nettoyer_son(ep["reaction"], wav, p["debut"], p["fin"], ep.get("debruitage_fin", 6), ep.get("volume_fin", -16))
         else:                                   # plan muet (pour laisser lire l'appel à l'action)
             lancer(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo",
                     "-t", f"{p['fin'] - p['debut']:.3f}", str(wav)])
