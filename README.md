@@ -35,7 +35,7 @@ pip install -r requirements.txt
 | `reaction`, `vocal` | Tes deux fichiers (chemins depuis le fichier d'épisode) |
 | `accroche.texte` | La phrase forte en gros au début (Anton, majuscules) |
 | `accroche.debut` / `fin` | Facultatif : rejoue ce passage du vocal pendant l'accroche. Sinon, laisse `null` et mets `duree` |
-| `vocal_extrait` | Le passage du vocal à garder (en secondes) |
+| `vocal_extrait` | Le passage du vocal à garder (en secondes), ou une liste de passages mis bout à bout pour couper une hésitation |
 | `reaction_pendant_vocal` | Tes réactions pendant le vocal : de préférence un seul passage continu `{"debut": 17}` (plus naturel), ou plusieurs plans mis bout à bout |
 | `fin` | Le passage de ta vidéo où tu parles à la fin. Ou plusieurs plans, dont des plans muets (`"son": false`) pour laisser le temps de lire l'appel à l'action |
 | `cta` | L'appel à l'action à l'écran : un texte, ou une liste de cartes qui arrivent l'une après l'autre (les emojis marchent) |

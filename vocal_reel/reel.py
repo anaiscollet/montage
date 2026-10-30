@@ -553,8 +553,10 @@ def etape_monter(ep):
     if acc.get("debut") is not None:
         nettoyer_son(ep["vocal"], dos / "a_accroche.wav", acc["debut"], acc["fin"], debruitage)
         morceaux.append(("vocal", acc["debut"], acc["fin"], dos / "a_accroche.wav"))
-    nettoyer_son(ep["vocal"], dos / "a_vocal.wav", ext["debut"], ext["fin"], debruitage)
-    morceaux.append(("vocal", ext["debut"], ext["fin"], dos / "a_vocal.wav"))
+    # le vocal : un passage, ou plusieurs mis bout à bout (pour couper une hésitation au milieu)
+    for i, e in enumerate(ext if isinstance(ext, list) else [ext]):
+        nettoyer_son(ep["vocal"], dos / f"a_vocal{i}.wav", e["debut"], e["fin"], debruitage)
+        morceaux.append(("vocal", e["debut"], e["fin"], dos / f"a_vocal{i}.wav"))
     plans_fin = fin if isinstance(fin, list) else [fin]
     for i, p in enumerate(plans_fin):
         wav = dos / f"a_fin{i}.wav"
