@@ -595,30 +595,28 @@ def etape_monter(ep):
     ctas = ep.get("cta", "Envoie-moi ton vocal en DM 🎙️")
     ctas = ctas if isinstance(ctas, list) else [ctas]
 
-    def placer(groupes, src, d, f, decal):
+    def placer(groupes, morceaux_src):
+        """Place chaque groupe de sous-titres dans le Reel. Un groupe reste entier même quand
+        on a coupé un blanc ou un « euh » au milieu : ses mots sont pris dans les morceaux gardés."""
         res = []
         for g in groupes:
-            g2 = [{"mot": m["mot"], "debut": m["debut"] - d + decal, "fin": m["fin"] - d + decal}
-                  for m in g if m["debut"] >= d - 0.05 and m["fin"] <= f + 0.15]
+            g2 = []
+            for m in g:
+                for d, f, decal in morceaux_src:
+                    if m["debut"] >= d - 0.05 and m["fin"] <= f + 0.15:
+                        g2.append({"mot": m["mot"], "debut": max(m["debut"], d) - d + decal,
+                                   "fin": min(m["fin"], f) - d + decal})
+                        break
             if g2:
                 res.append(g2)
         return res
 
     g_vocal_tous = lire_sous_titres_txt(dos / "sous_titres_vocal.txt", mots_v)
     g_moi_tous = lire_sous_titres_txt(dos / "sous_titres_reaction.txt", mots_r)
-    g_vocal, g_moi, g_srt = [], [], []
-    for src, d, f, decal in chrono:
-        if src == "vocal":
-            gs = placer(g_vocal_tous, src, d, f, decal)
-            g_srt += gs
-            if decal + 0.01 >= duree_acc:       # pas de sous-titres sous le bandeau d'accroche
-                g_vocal += gs
-            else:
-                g_vocal += [g for g in gs if g[-1]["fin"] > duree_acc + 0.2]
-        elif src == "moi":
-            gs = placer(g_moi_tous, src, d, f, decal)
-            g_moi += gs
-            g_srt += gs
+    gs_v = placer(g_vocal_tous, [(d, f, decal) for s, d, f, decal in chrono if s == "vocal"])
+    g_moi = placer(g_moi_tous, [(d, f, decal) for s, d, f, decal in chrono if s == "moi"])
+    g_vocal = [g for g in gs_v if g[-1]["fin"] > duree_acc + 0.2]   # pas de sous-titres sous le bandeau d'accroche
+    g_srt = sorted(gs_v + g_moi, key=lambda g: g[0]["debut"])
 
     # 3. le .srt séparé
     srt = []
