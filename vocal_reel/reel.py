@@ -665,8 +665,12 @@ def etape_monter(ep):
         pos[id(g)] = position_sous_titre(bx_vocal, g[0]["debut"], g[-1]["fin"], h, bulle.bas + 20, H - ZONE_BAS - 20)
     for g in g_moi:
         h = st_m.hauteur(g)
-        pos[id(g)] = position_sous_titre(bx_fin, g[0]["debut"], g[-1]["fin"], h, ZONE_HAUT + 20,
-                                         H - ZONE_BAS - 30 - hauteur_cta(ctas) - 20)
+        if ep.get("sous_titres_fin_en_haut", True):
+            # toujours en haut, à la même place : rien sur la bouche, et le bas reste libre pour l'appel à l'action
+            pos[id(g)] = ZONE_HAUT + 30 + h / 2
+        else:
+            pos[id(g)] = position_sous_titre(bx_fin, g[0]["debut"], g[-1]["fin"], h, ZONE_HAUT + 20,
+                                             H - ZONE_BAS - 30 - hauteur_cta(ctas) - 20)
 
     y_accroche = position_sous_titre(bx_vocal, 0, duree_acc, hauteur_accroche(acc["texte"]),
                                      bulle.bas + 20, H - ZONE_BAS - 20)

@@ -41,6 +41,7 @@ pip install -r requirements.txt
 | `cta` | L'appel à l'action à l'écran : un texte, ou une liste de cartes qui arrivent l'une après l'autre. Une carte peut faire 2 lignes avec « \n » (les emojis marchent) |
 | `cta_apres` | Quand les cartes apparaissent, en secondes après le début de ta fin |
 | `debruitage` | Réduction de bruit du vocal (0 = aucune, 8 = léger, 15 = fort) |
+| `sous_titres_fin_en_haut` | Tes sous-titres de fin toujours en haut de l'écran (par défaut : oui), pour ne pas couvrir ta bouche et laisser le bas à l'appel à l'action |
 | `volume_vocal`, `volume_fin` | Volume de la voix en LUFS (-16 par défaut ; -19 = un peu moins fort, -22 = nettement moins fort) |
 
 ## Ce que fait l'outil
